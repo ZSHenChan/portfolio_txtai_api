@@ -1,6 +1,10 @@
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+os.environ['OMP_NUM_THREADS'] = '1'
+
 import logging
 import json
-import os
 import azure.functions as func
 from txtai.embeddings import Embeddings
 
@@ -48,8 +52,7 @@ preload_embeddings()
 @app.route(route="portfolio_rag_search")
 def portfolio_rag_search(req: func.HttpRequest) -> func.HttpResponse:
     query = req.params.get('query')
-    limit = req.params.get('limit', default=1, type=int)
-
+    limit = req.params.get('limit')
     # load_index_if_needed()
 
     # --- Check if index loading failed ---
@@ -79,7 +82,7 @@ def portfolio_rag_search(req: func.HttpRequest) -> func.HttpResponse:
 
         # Return results as JSON
         return func.HttpResponse(json.dumps(results),
-        mimetype="application/json",status_code=20)
+        mimetype="application/json",status_code=200)
 
     except Exception as e:
         logging.error(f"Error during search execution for query '{query}': {e}", exc_info=True)

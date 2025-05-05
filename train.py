@@ -1,8 +1,8 @@
-from txtai.embeddings import Embeddings
-data_set_version=1.2
-data_set_file_name = f"dataset_v{data_set_version}.json"
-
 import json
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+
+from txtai.embeddings import Embeddings
 
 def process_json_dataset(filepath):
     """
@@ -51,15 +51,8 @@ def process_json_dataset(filepath):
                 index_data.append((pair_id, data_object, None)) # Pass metadata as tags
 
     print(f"Prepared {len(index_data)} items for indexing.")
+    # print(index_data)
     return index_data
-
-
-
-filepath = f"./mounts/data/{data_set_file_name}"
-
-index_data = process_json_dataset(filepath)
-
-import os
 
 def indexing(filePath, save=False):
 
@@ -70,10 +63,10 @@ def indexing(filePath, save=False):
     embeddings.index(index_data)
 
     if(save):
-        if not os.path.exists(index_path_qa):
-            os.makedirs(index_path_qa)
-        print(f"Saving QA index to {index_path_qa}...")
-        embeddings.save(index_path_qa)
+        if not os.path.exists(filePath):
+            os.makedirs(filePath)
+        print(f"Saving QA index to {filePath}...")
+        embeddings.save(filePath)
         print("QA Index saved.")
 
     try:
@@ -92,6 +85,30 @@ def indexing(filePath, save=False):
 
     return embeddings
 
-index_path_qa = "./mounts/index"
-embeddings = indexing(index_path_qa,save=True)
-print("Program exit with no error.")
+def find_answer(user_query,limit=3):
+    embeddings = Embeddings({"path": "sentence-transformers/nli-mpnet-base-v2", "content": True})
+    index_path_qa = "./index_files"
+    embeddings.load(index_path_qa) # Load the index from the specified path
+    query_sql = f"SELECT text, answer, score FROM txtai WHERE similar('{user_query}') LIMIT {limit}"
+    results = embeddings.search(query_sql)
+    return results
+
+def print_ans(search_results):
+    if search_results:
+        for result in search_results:
+            print(result)
+            print("-" * 10)
+    else:
+        print("  No similar questions found in the index.")
+
+def index_data(version):
+    data_set_version=version
+    data_set_file_name = f"dataset_v{data_set_version}.json"
+    dataset_filepath = f"./data/{data_set_file_name}"
+    process_json_dataset(dataset_filepath)
+    index_path_qa = "./index_files"
+    embeddings = indexing(index_path_qa,save=True)
+    return embeddings
+
+ans = find_answer("Tell me about hologram chatbot")
+print_ans(ans)

@@ -93,6 +93,7 @@ data.db
 
 .idea/
 
+
 .venv*/
 venv*/
 __pycache__/
@@ -103,3 +104,6 @@ htmlcov/
 docs/_build/
 .DS_Store
 .python_packages
+.fake
+
+data/
